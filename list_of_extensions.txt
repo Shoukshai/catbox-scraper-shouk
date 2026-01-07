@@ -1,0 +1,89 @@
+# customise with whatever you want to look for!
+# obviously, some will be rarer than others
+# but you can find zips, txt files, etc. tons of stuff.
+
+# below are a ton of templates that you can use and common file extensions for each type.
+# simply copy and paste the ones you want into FILE_EXTENSIONS in the main script.
+
+# IMAGES
+FILE_EXTENSIONS = [
+    ".png",
+    ".gif",
+    ".jpg",
+    ".jpeg",
+    ".bmp",
+    ".tif",
+    ".tiff",
+    ".webp",
+]
+
+# VIDEOS
+FILE_EXTENSIONS = [
+    ".webm",
+    ".mp4",
+    ".mov",
+    ".avi",
+    ".mkv",
+    ".flv",
+    ".wmv",
+]
+
+# CODE
+FILE_EXTENSIONS = [
+    ".html",
+    ".css",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".php",
+    ".py",
+    ".rb",
+    ".java",
+    ".cpp",
+    ".c",
+    ".cs",
+    ".swift",
+    ".go",
+    ".bat",
+]
+
+# DOCUMENTS
+FILE_EXTENSIONS = [
+    ".txt",
+    ".md",
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".odt",
+    ".rtf",
+]
+
+# COMPRESSED / ARCHIVES
+FILE_EXTENSIONS = [
+    ".zip",
+    ".rar",
+    ".7z",
+    ".tar",
+    ".gz",
+    ".bz2",
+    ".xz",
+]
+
+# AUDIO
+FILE_EXTENSIONS = [
+    ".mp3",
+    ".wav",
+    ".aac",
+    ".flac",
+    ".ogg",
+    ".m4a",
+]
+
+# EXAMPLE: combine whatever you want
+# FILE_EXTENSIONS = image_extensions + video_extensions
+# FILE_EXTENSIONS = image_extensions + document_extensions
+# FILE_EXTENSIONS = image_extensions + video_extensions + archive_extensions
+
+# Complete one if lazy
+FILE_EXTENSIONS = [".png",".gif",".jpg",".jpeg",".bmp",".tif",".tiff",".webp",".webm",".mp4",".mov",".avi",".mkv",".flv",".wmv",".html",".css",".js",".jsx",".ts",".tsx",".php",".py",".rb",".java",".cpp",".c",".cs",".swift",".go",".bat",".txt",".md",".pdf",".doc",".docx",".odt",".rtf",".zip",".rar",".7z",".tar",".gz",".bz2",".xz",".mp3",".wav",".aac",".flac",".ogg",".m4a"]
