@@ -6,9 +6,6 @@ The script takes from file extensions specified inside the main.py, generates ra
 
 `https://files.catbox.moe/[a-z0-9]{6}.(extension)` is the format for URL generation.
 
-## Demonstration
-https://github.com/dootss/catbox-scraper/assets/126783585/c0213d13-01ec-4a55-80cd-1e877b081530
-
 ## Installation and Usage
 You will need:
 - Python
@@ -24,9 +21,7 @@ and the script will handle everything else from there!
 Press CTRL+C to stop the script. (Youll have to wait for a bit or force close the terminal)
 
 ## Configuration
-If you wish to change the extensions the script attempts to check for, simply edit `main.py`'s `FILE_EXTENSIONS` field with the extensions you wish to check for:
-
-![image](https://github.com/dootss/catbox-scraper/assets/126783585/726ebad4-9fa9-4807-bafe-28f3867c6949)
+If you wish to change the extensions the script attempts to check for, simply edit `main.py`'s `FILE_EXTENSIONS` field with the extensions you wish to check for, if you want a list of them: [Click here](https://raw.githubusercontent.com/Shoukshai/catbox-scraper-shouk/refs/heads/main/list_of_extensions.txt)
 
 By default, the script checks for the following: `png, gif, jpg, jpeg, webm, webp, mkv, mov, mp4`
 
