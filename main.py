@@ -1,124 +1,159 @@
 import os
 import sys
-import yaml
 import time
 import random
 import string
-import asyncio
-import aiohttp
-import aiofiles
 import threading
+import requests
+from concurrent.futures import ThreadPoolExecutor
 
+url = "https://files.catbox.moe/"
 
-CONFIG_FILE = 'config.yaml'
-URL = 'https://files.catbox.moe/'
-os.system('')
-sys.stdout.write('\033[?25l')
+FILE_EXTENSIONS = [
+    ".png",
+    ".gif",
+    ".jpg",
+    ".jpeg",
+    ".webm",
+    ".webp",
+    ".mkv",
+    ".mov",
+    ".mp4",
+]
 
+THREADS = 32 # Shouldn't go very high or rate limite
+UPDATE_RATE = 0.25  # Rate in seconds
 
-with open(CONFIG_FILE, 'r') as config_file:
-    config = yaml.safe_load(config_file)
-
-file_extensions = config['file_extensions']
-threads = config['threads']
-update_rate = config['update_rate']
-
-urls_scanned = 0
-valid_found = 0
+urls_checked = 0
+hits_found = 0
+files_saved = 0
 start_time = time.time()
-status_board_running = True
 
-print_lock = asyncio.Semaphore()
-file_lock = asyncio.Lock()
+running = True
+lock = threading.Lock()
 
+def rdm_str(len_chars: int = 6) -> str:
+    charset = string.ascii_lowercase + string.digits
+    return "".join(random.choice(charset) for _ in range(len_chars))
 
-def clear_screen():
-    if sys.platform == 'linux' or sys.platform == 'linux2':
-        os.system('clear')
-    elif sys.platform == 'win32':
-        os.system('cls')
+def save(folder: str, filename: str, data: bytes) -> bool:
+    try:
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, filename)
+        with open(path, "wb") as f:
+            f.write(data)
+        return True
+    except:
+        return False
 
-def random_string(length=6):
-    return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length))
+def hits_log(url: str) -> None:
+    with open("hits.log", "a", encoding="utf-8") as f:
+        f.write(url + "\n")
 
-def format_elapsed_time(seconds):
-    hours, remainder = divmod(int(seconds), 3600)
-    minutes, seconds = divmod(remainder, 60)
+def timer(seconds: int) -> str:
+    hours, rem = divmod(seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
     return f"{hours:02}:{minutes:02}:{seconds:02}"
 
-async def download_image(session, url, folder_name, random_filename):
-    async with session.get(url) as image_data:
-        if image_data.status == 200:
-            content = await image_data.read()
-            if content:
-                async with aiofiles.open(os.path.join(folder_name, random_filename), mode='wb') as f:
-                    await f.write(content)
+def dashboard() -> None:
+    with lock:
+        elapsed = int(time.time() - start_time)
+        local_urls_checked = urls_checked
+        local_hits_found = hits_found
+        local_files_saved = files_saved
 
-async def save_valid_url(folder_name, url):
-    os.makedirs(folder_name, exist_ok=True)
-    async with aiofiles.open(f"{folder_name}/valids.txt", "a") as file:
-        await file.write(url + "\n")
+    per_sec = local_urls_checked // elapsed if elapsed > 0 else 0
 
-def status_board():
-    global urls_scanned, valid_found, start_time, status_board_running
+    sys.stdout.write("\033[H")
 
+    print("┌────────────────────────────────────────┐")
+    print("│              CATBOX SCRAPER            │")
+    print("├────────────────────────────────────────┤")
+    print("│                BY DOOT                 │")
+    print("│            UPDATED VERSION             │")
+    print("└────────────────────────────────────────┘")
 
-    while status_board_running:
-        if urls_scanned > 0:
-            elapsed_time = time.time() - start_time
-            formatted_elapsed_time = format_elapsed_time(elapsed_time)
+    print("┌────────────────────────────────────────┐")
+    print("│               MAIN STATS               │")
+    print("├────────────────────────────────────────┤")
+    print(f"│ TIME ELAPSED : {timer(elapsed):<23} │")
+    print(f"│ CHECKS       : {local_urls_checked:<23} │")
+    print(f"│ HITS         : {local_hits_found:<23} │")
+    print(f"│ SAVED        : {local_files_saved:<23} │")
+    print(f"│ PER SECOND   : {per_sec:<23} │")
+    print("└────────────────────────────────────────┘")
 
+def worker(session: requests.Session) -> None:
+    global urls_checked, hits_found, files_saved, running
 
-            sys.stdout.write('\033[5;1H[-----------------------]\n')
-            sys.stdout.write(f'\033[7;1H TIME ELAPSED : {formatted_elapsed_time}\n')
-            sys.stdout.write(f'\033[8;1H CHECKS       : {urls_scanned:,}\n')
-            sys.stdout.write(f'\033[9;1H HITS         : {valid_found:,}\n')
-            sys.stdout.write(f'\033[6;1H PER SECOND   : {int(urls_scanned / elapsed_time):,}\n')
-            sys.stdout.write('\033[10;1H[-----------------------]\n')
-            sys.stdout.flush()
-        time.sleep(update_rate)
+    while running:
+        for ext in FILE_EXTENSIONS:
+            if not running:
+                break
 
-async def check_url(_):
-    global urls_scanned, valid_found
-    async with aiohttp.ClientSession() as session:
-        while True:
-            for ext in file_extensions:
-                filename = random_string() + ext
-                random_url = URL + filename
-                try:
-                    async with session.get(random_url, timeout=5) as response:
-                        urls_scanned += 1
+            filename = rdm_str() + ext
+            full_url = url + filename
 
-                        if response.status == 200:
-                            valid_found += 1
-                            os.makedirs(ext.strip('.'), exist_ok=True)
-                            await download_image(session, random_url, ext.strip('.'), filename)
-                            await save_valid_url(ext.strip('.'), random_url)
+            with lock:
+                urls_checked += 1
 
-                except asyncio.exceptions.TimeoutError:
-                    continue
-                except ConnectionResetError:
-                    continue
-                except aiohttp.ClientConnectorError:
-                    continue
-                except Exception as e:
-                    print(f"Exception {type(e).__name__}: {e}")
+            try:
+                response = session.get(full_url, timeout=10)
+            except requests.RequestException:
+                continue
 
+            if response.status_code == 200:
+                hits_log(full_url)
+
+                with lock:
+                    hits_found += 1
+
+                folder = ext.lstrip(".")
+                success = save(folder, filename, response.content)
+
+                if success:
+                    with lock:
+                        files_saved += 1
+
+def main() -> None:
+    global running
+
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": (
+            "Mozilla/5.0 (Linux; Android 15; SM-S931B Build/AP3A.240905.015.A2; wv) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 "
+            "Chrome/127.0.6533.103 Mobile Safari/537.36"
+        ),
+        "Accept": "*/*",
+    })
+
+    os.system("")
+    sys.stdout.write("\033[2J")
+
+    last_update = 0
+
+    with ThreadPoolExecutor(max_workers=THREADS) as executor:
+        for _ in range(THREADS):
+            executor.submit(worker, session)
+
+        try:
+            while running:
+                now = time.time()
+                if now - last_update >= UPDATE_RATE:
+                    dashboard()
+                    last_update = now
+                time.sleep(0.01)
+        except KeyboardInterrupt:
+            running = False
+            time.sleep(0.2)
+            sys.stdout.write("\033[?25h")
+            print("\nStopped.")
 
 if __name__ == "__main__":
-    clear_screen()
-    print(" CATBOX SCRAPER")
-    print("[==============]")
-    print("    BY DOOT\n")
-    print(' STARTING...')
-    threading.Thread(target=status_board, daemon=True).start()
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    tasks = [check_url(i) for i in range(threads)]
+    sys.stdout.write("\033[?25l")
     try:
-        loop.run_until_complete(asyncio.gather(*tasks))
-    except KeyboardInterrupt:
-        status_board_running = False
-        sys.exit("Stopped!")
+        main()
+    finally:
+        sys.stdout.write("\033[?25h")
+        sys.stdout.flush()
