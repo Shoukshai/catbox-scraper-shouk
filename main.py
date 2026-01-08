@@ -21,7 +21,7 @@ FILE_EXTENSIONS = [
     ".mp4",
 ]
 
-THREADS = 32 # Shouldn't go very high or rate limite
+THREADS = 32 # Shouldn't go very high or rate limit
 UPDATE_RATE = 0.25  # Rate in seconds
 
 urls_checked = 0
@@ -157,3 +157,4 @@ if __name__ == "__main__":
     finally:
         sys.stdout.write("\033[?25h")
         sys.stdout.flush()
+
